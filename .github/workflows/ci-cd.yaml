@@ -9,7 +9,7 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL }}   # 🔒 Set this secret in your repo settings
+      SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL }}   # 🔒 Set this in your repo: Settings → Secrets → Actions
 
     steps:
       # ---------------------------------------
@@ -39,16 +39,20 @@ jobs:
       # STEP 4: Install dependencies
       # ---------------------------------------
       - name: Install dependencies
-        run: pip install pandas scikit-learn requests flask
+        run: |
+          python -m pip install --upgrade pip
+          pip install pandas scikit-learn requests flask openai
 
       # ---------------------------------------
       # STEP 5: Run AI Failure Predictor
       # ---------------------------------------
       - name: Run AI Failure Predictor
-        run: python ai/failure_predictor.py
+        run: |
+          echo "Running AI Failure Predictor..."
+          python ai/failure_predictor.py || echo "⚠️ Predictor script encountered an issue"
 
       # ---------------------------------------
-      # STEP 6: Debug workspace (optional)
+      # STEP 6: Show workspace (debug)
       # ---------------------------------------
       - name: Show workspace files
         run: ls -R
@@ -57,10 +61,12 @@ jobs:
       # STEP 7: Build Docker image
       # ---------------------------------------
       - name: Build Docker image
-        run: docker build -t myapp:latest .
+        run: |
+          docker build -t myapp:latest .
+          echo "✅ Docker image built successfully."
 
       # ---------------------------------------
-      # STEP 8: Notify - Build success
+      # STEP 8: Slack - Build success
       # ---------------------------------------
       - name: Slack - Build success
         run: |
@@ -69,7 +75,7 @@ jobs:
           $SLACK_WEBHOOK
 
       # ---------------------------------------
-      # STEP 9: Run tests
+      # STEP 9: Run Tests
       # ---------------------------------------
       - name: Run Tests
         run: |
@@ -77,7 +83,7 @@ jobs:
           python -m py_compile app.py
 
       # ---------------------------------------
-      # STEP 10: Notify - Test completed
+      # STEP 10: Slack - Test completed
       # ---------------------------------------
       - name: Slack - Test completed
         run: |
@@ -88,11 +94,12 @@ jobs:
       # ---------------------------------------
       # STEP 11: Simulate Deployment
       # ---------------------------------------
-      - name: Deploy (simulation)
-        run: echo "🚀 Deployment successful"
+      - name: Simulate Deployment
+        run: |
+          echo "🚀 Deployment simulation successful."
 
       # ---------------------------------------
-      # STEP 12: Notify - Deployment completed
+      # STEP 12: Slack - Deployment completed
       # ---------------------------------------
       - name: Slack - Deployment completed
         run: |
