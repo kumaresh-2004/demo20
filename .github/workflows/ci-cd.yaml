@@ -1,36 +1,101 @@
-name: AI-Enhanced CI/CD
+name: AI-Enhanced CI/CD with Slack Alerts
 
 on:
   push:
     branches: [ main ]
 
 jobs:
-  build-test:
+  build-test-deploy:
     runs-on: ubuntu-latest
 
+    env:
+      SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL }}   # 🔒 Set this secret in your repo settings
+
     steps:
-      - name: Checkout code
+      # ---------------------------------------
+      # STEP 1: Checkout source code
+      # ---------------------------------------
+      - name: Checkout repository
         uses: actions/checkout@v4
 
+      # ---------------------------------------
+      # STEP 2: Notify - Build started
+      # ---------------------------------------
+      - name: Slack - Build started
+        run: |
+          curl -X POST -H 'Content-type: application/json' \
+          --data '{"text":":rocket: Build started for *SmartOps AI DevOps Project*"}' \
+          $SLACK_WEBHOOK
+
+      # ---------------------------------------
+      # STEP 3: Setup Python
+      # ---------------------------------------
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.10"
 
-      - name: Install Python dependencies
-        run: pip install pandas scikit-learn requests
+      # ---------------------------------------
+      # STEP 4: Install dependencies
+      # ---------------------------------------
+      - name: Install dependencies
+        run: pip install pandas scikit-learn requests flask
 
-      - name: Run AI failure predictor
+      # ---------------------------------------
+      # STEP 5: Run AI Failure Predictor
+      # ---------------------------------------
+      - name: Run AI Failure Predictor
         run: python ai/failure_predictor.py
 
-      - name: Debug workspace
+      # ---------------------------------------
+      # STEP 6: Debug workspace (optional)
+      # ---------------------------------------
+      - name: Show workspace files
         run: ls -R
 
+      # ---------------------------------------
+      # STEP 7: Build Docker image
+      # ---------------------------------------
       - name: Build Docker image
         run: docker build -t myapp:latest .
 
-      - name: Run tests
-        run: echo "✅ Tests passed successfully"
+      # ---------------------------------------
+      # STEP 8: Notify - Build success
+      # ---------------------------------------
+      - name: Slack - Build success
+        run: |
+          curl -X POST -H 'Content-type: application/json' \
+          --data '{"text":":white_check_mark: Docker image build completed successfully."}' \
+          $SLACK_WEBHOOK
 
+      # ---------------------------------------
+      # STEP 9: Run tests
+      # ---------------------------------------
+      - name: Run Tests
+        run: |
+          echo "Running basic tests..."
+          python -m py_compile app.py
+
+      # ---------------------------------------
+      # STEP 10: Notify - Test completed
+      # ---------------------------------------
+      - name: Slack - Test completed
+        run: |
+          curl -X POST -H 'Content-type: application/json' \
+          --data '{"text":":microscope: Tests completed successfully."}' \
+          $SLACK_WEBHOOK
+
+      # ---------------------------------------
+      # STEP 11: Simulate Deployment
+      # ---------------------------------------
       - name: Deploy (simulation)
         run: echo "🚀 Deployment successful"
+
+      # ---------------------------------------
+      # STEP 12: Notify - Deployment completed
+      # ---------------------------------------
+      - name: Slack - Deployment completed
+        run: |
+          curl -X POST -H 'Content-type: application/json' \
+          --data '{"text":":tada: Deployment completed successfully for *SmartOps AI DevOps Project*!*"}' \
+          $SLACK_WEBHOOK
